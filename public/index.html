@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Youtube to MP3</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="script.v2.js" defer></script>
+</head>
+
+<body>
+    <div class="background-glob"></div>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+                        stroke="white" stroke-width="2" />
+                    <path d="M10 8L16 12L10 16V8Z" fill="white" />
+                </svg>
+                <h1>MP3<span class="accent">Converter</span></h1>
+            </div>
+            <p>Convert your favorite videos to high-quality audio instantly.</p>
+        </header>
+
+        <main>
+            <div class="input-group">
+                <input type="text" id="urlInput" placeholder="Paste YouTube URL here..." autocomplete="off">
+                <div class="focus-border"></div>
+            </div>
+
+            <div id="videoPreview" class="video-preview hidden">
+                <img id="thumbImg" src="" alt="Thumbnail">
+                <div class="video-info">
+                    <h3 id="videoTitle">Video Title</h3>
+                    <p id="videoAuthor">Channel Name</p>
+                </div>
+            </div>
+
+            <button id="convertBtn">
+                <span class="btn-text">Convert to MP3</span>
+                <div class="loading-spinner"></div>
+            </button>
+
+            <div id="statusMessage" class="status-message"></div>
+        </main>
+
+        <footer>
+            <p>© 2024 Premium Converter. Fast & Secure.</p>
+        </footer>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,233 @@
+:root {
+    --bg-color: #0f0f13;
+    --card-bg: rgba(255, 255, 255, 0.05);
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a0;
+    --accent-color: #ff0055;
+    --accent-glow: #ff005580;
+    --input-bg: rgba(255, 255, 255, 0.08);
+    --font-family: 'Outfit', sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+.background-glob {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+    top: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: -1;
+    filter: blur(80px);
+    opacity: 0.4;
+    animation: pulse 8s infinite alternate;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.3;
+        transform: translateX(-50%) scale(0.9);
+    }
+
+    100% {
+        opacity: 0.5;
+        transform: translateX(-50%) scale(1.1);
+    }
+}
+
+.container {
+    background: var(--card-bg);
+    padding: 3rem;
+    border-radius: 24px;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    width: 100%;
+    max-width: 500px;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+header {
+    margin-bottom: 2rem;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 1rem;
+}
+
+h1 {
+    font-weight: 600;
+    font-size: 1.8rem;
+    letter-spacing: -0.5px;
+}
+
+.accent {
+    color: var(--accent-color);
+}
+
+header p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.input-group {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+input {
+    width: 100%;
+    padding: 1rem 1.2rem;
+    background: var(--input-bg);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    color: white;
+    font-family: inherit;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+input:focus {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.05);
+}
+
+.video-preview {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 10px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    text-align: left;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+}
+
+.video-preview.hidden {
+    display: none;
+}
+
+.video-preview img {
+    width: 80px;
+    height: 45px;
+    /* 16:9 ratio approx */
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.video-info h3 {
+    font-size: 0.95rem;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 300px;
+}
+
+.video-info p {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+button {
+    width: 100%;
+    padding: 1rem;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #ff0055, #ff3377);
+    color: white;
+    font-weight: 600;
+    font-family: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -5px var(--accent-glow);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+button.loading .btn-text {
+    opacity: 0;
+}
+
+button.loading .loading-spinner {
+    opacity: 1;
+}
+
+.loading-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: spin 0.8s linear infinite;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+@keyframes spin {
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+.status-message {
+    margin-top: 1.5rem;
+    min-height: 20px;
+    font-size: 0.9rem;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.status-message.error {
+    color: #ff4d4d;
+    opacity: 1;
+}
+
+.status-message.success {
+    color: #00ff88;
+    opacity: 1;
+}
+
+footer {
+    margin-top: 3rem;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.3);
+}
