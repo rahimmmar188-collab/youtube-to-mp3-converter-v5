@@ -1,17 +1,24 @@
 const ytdl = require('@distube/ytdl-core');
 
 const INVIDIOUS_INSTANCES = [
+    'https://invidious.flokinet.to',
     'https://inv.riverside.rocks',
     'https://yewtu.be',
     'https://invidious.snopyta.org',
-    'https://invidious.flokinet.to',
-    'https://invidious.kavin.rocks'
+    'https://invidious.kavin.rocks',
+    'https://inv.nadeko.net',
+    'https://invidious.sethforprivacy.com'
 ];
 
 async function getInfoFromInvidious(videoId) {
+    const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36';
     for (const instance of INVIDIOUS_INSTANCES) {
         try {
-            const res = await fetch(`${instance}/api/v1/videos/${videoId}`, { signal: AbortSignal.timeout(5000) });
+            console.log(`[INFO] Trying Invidious instance: ${instance}`);
+            const res = await fetch(`${instance}/api/v1/videos/${videoId}`, {
+                headers: { 'User-Agent': userAgent },
+                signal: AbortSignal.timeout(6000)
+            });
             if (res.ok) {
                 const data = await res.json();
                 return {
