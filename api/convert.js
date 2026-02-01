@@ -11,7 +11,15 @@ module.exports = async (req, res) => {
 
     try {
         console.log('[CONVERT] Fetching info for:', videoUrl);
-        const info = await ytdl.getInfo(videoUrl);
+        const info = await ytdl.getInfo(videoUrl, {
+            requestOptions: {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1',
+                    'Accept': '*/*',
+                    'Accept-Language': 'en-US,en;q=0.5',
+                }
+            }
+        });
         const title = info.videoDetails.title.replace(/[^\w\s-]/gi, '') || 'audio';
 
         res.setHeader('Content-Disposition', `attachment; filename="${title}.mp3"`);
@@ -22,8 +30,9 @@ module.exports = async (req, res) => {
             filter: 'audioonly',
             requestOptions: {
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                    'Referer': 'https://www.youtube.com/'
+                    'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1',
+                    'Accept': '*/*',
+                    'Accept-Language': 'en-US,en;q=0.5',
                 }
             }
         });
