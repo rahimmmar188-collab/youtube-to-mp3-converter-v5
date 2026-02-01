@@ -77,18 +77,61 @@ convertBtn.addEventListener('click', async () => {
             await fetchVideoInfo(url);
         }
 
-        // We no longer trigger a manual fallback in the frontend.
-        // We call the API, and if the API needs to fallback, it will issue a 302 redirect.
+        showStatus('Connecting to audio server...', 'info');
 
-        window.location.href = `/api/convert?url=${encodeURIComponent(url)}`;
+        const response = await fetch(`/api/convert?url=${encodeURIComponent(url)}`);
 
-        showStatus('Download initiated! Testing link quality...', 'success');
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || 'Server busy, please try again in a moment');
+        }
+
+        showStatus('Found audio! Initializing download...', 'success');
+
+        const reader = response.body.getReader();
+        const chunks = [];
+        let receivedLength = 0;
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            receivedLength += value.length;
+            // Update status with progress if possible
+            if (receivedLength > 0) {
+                showStatus(`Downloading: ${(receivedLength / 1024 / 1024).toFixed(1)} MB received...`, 'info');
+            }
+        }
+
+        const blob = new Blob(chunks, { type: 'audio/mpeg' });
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = downloadUrl;
+
+        // Get filename from header or fallback
+        const contentDisp = response.headers.get('Content-Disposition');
+        let filename = 'audio.mp3';
+        if (contentDisp && contentDisp.includes('filename=')) {
+            filename = contentDisp.split('filename=')[1].replace(/["]/g, '');
+        }
+
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+
+        setTimeout(() => {
+            window.URL.revokeObjectURL(downloadUrl);
+            document.body.removeChild(a);
+        }, 100);
+
+        showStatus('Download Complete!', 'success');
 
     } catch (err) {
         console.error('Operation failed:', err);
         showStatus('Error: ' + err.message, 'error');
     } finally {
-        setTimeout(() => setLoading(false), 2000);
+        setLoading(false);
     }
 });
 

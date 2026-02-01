@@ -81,16 +81,48 @@ module.exports = async (req, res) => {
 
     const { PassThrough } = require('stream');
 
+    async function tryProxyFallback(videoId) {
+        const fallbacks = [
+            `https://api.download.yt/@download/128-mp3/${videoId}`,
+            `https://api.v-mate.top/@download/128-mp3/${videoId}`,
+            `https://mp3.yt-download.org/@download/128-mp3/${videoId}`
+        ];
+
+        for (const url of fallbacks) {
+            try {
+                console.log(`[PROXY] Trying fallback: ${url}`);
+                const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
+                if (response.ok && response.body) {
+                    return response.body;
+                }
+            } catch (e) {
+                console.warn(`[PROXY] Fallback failed: ${url}`, e.message);
+            }
+        }
+        return null;
+    }
+
     try {
         const ffStream = ffmpeg(stream)
             .audioBitrate(128)
             .format('mp3')
-            .on('error', (err) => {
+            .on('error', async (err) => {
                 console.error('[FFMPEG] Error:', err.message);
                 if (!res.headersSent) {
-                    // Fallback to 302 redirect if ffmpeg fails mid-stream or at start
                     const videoId = ytdl.getVideoID(videoUrl);
-                    return res.redirect(`https://api.v-mate.top/@download/128-mp3/${videoId}`);
+                    const fallbackStream = await tryProxyFallback(videoId);
+                    if (fallbackStream) {
+                        res.setHeader('Content-Disposition', `attachment; filename="${title}.mp3"`);
+                        res.setHeader('Content-Type', 'audio/mpeg');
+                        const reader = fallbackStream.getReader();
+                        while (true) {
+                            const { done, value } = await reader.read();
+                            if (done) break;
+                            res.write(value);
+                        }
+                        return res.end();
+                    }
+                    res.status(500).json({ error: 'Conversion failed completely' });
                 }
             });
 
@@ -107,13 +139,22 @@ module.exports = async (req, res) => {
         });
 
     } catch (err) {
-        console.error('[CONVERT] Final catch error:', err.message);
-        try {
+        console.error('[CONVERT] Main catch error:', err.message);
+        if (!res.headersSent) {
             const videoId = ytdl.getVideoID(videoUrl);
-            // 302 Redirect is the "Magic" fix for seamless downloads without new tabs
-            return res.redirect(`https://api.v-mate.top/@download/128-mp3/${videoId}`);
-        } catch (redirErr) {
-            if (!res.headersSent) res.status(500).json({ error: 'Conversion failed completely' });
+            const fallbackStream = await tryProxyFallback(videoId);
+            if (fallbackStream) {
+                res.setHeader('Content-Disposition', `attachment; filename="${title}.mp3"`);
+                res.setHeader('Content-Type', 'audio/mpeg');
+                const reader = fallbackStream.getReader();
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    res.write(value);
+                }
+                return res.end();
+            }
+            res.status(500).json({ error: 'Critical failure' });
         }
     }
 };

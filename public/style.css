@@ -213,7 +213,13 @@ button.loading .loading-spinner {
     min-height: 20px;
     font-size: 0.9rem;
     opacity: 0;
-    transition: opacity 0.3s;
+    transition: all 0.3s;
+}
+
+.status-message.info {
+    color: var(--text-secondary);
+    opacity: 1;
+    animation: pulse 2s infinite;
 }
 
 .status-message.error {
@@ -226,68 +232,18 @@ button.loading .loading-spinner {
     opacity: 1;
 }
 
-.download-section {
-    margin-top: 2rem;
-    padding: 1.5rem;
-    background: rgba(0, 255, 136, 0.05);
-    border: 1px dashed rgba(0, 255, 136, 0.2);
-    border-radius: 16px;
-    animation: fadeIn 0.5s ease-out;
-}
+@keyframes pulse {
+    0% {
+        opacity: 0.6;
+    }
 
-.download-section.hidden {
-    display: none;
-}
+    50% {
+        opacity: 1;
+    }
 
-.download-section p {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    margin-bottom: 1.2rem;
-}
-
-.source-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 12px;
-    margin-bottom: 1rem;
-}
-
-.download-btn-manual {
-    display: inline-block;
-    padding: 0.8rem 1.2rem;
-    background: #00ff88;
-    color: #000;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 0.9rem;
-    border-radius: 10px;
-    transition: all 0.2s;
-    box-shadow: 0 5px 15px rgba(0, 255, 136, 0.2);
-}
-
-.download-btn-manual.secondary {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-    box-shadow: none;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.download-btn-manual:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 255, 136, 0.4);
-    background: #00e67a;
-}
-
-.download-btn-manual.secondary:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.4);
-}
-
-.hint {
-    font-size: 0.75rem !important;
-    opacity: 0.6;
-    margin-top: 1rem;
+    100% {
+        opacity: 0.6;
+    }
 }
 
 @keyframes fadeIn {
