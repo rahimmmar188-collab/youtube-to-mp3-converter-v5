@@ -24,114 +24,109 @@ async function fetchVideoInfo(url) {
         const response = await fetch(`/api/info?url=${encodeURIComponent(url)}`);
         const data = await response.json();
 
-        if (!response.ok) {
-            console.warn('Info fetch failed:', data.error);
+        if (data.isFallback) {
+            console.warn('Backend in fallback mode');
+            // Silent fallback data
+            thumbImg.src = `https://img.youtube.com/vi/${data.videoId}/mqdefault.jpg`;
+            videoTitle.textContent = data.title || 'YouTube Video';
+            videoAuthor.textContent = 'Ready for download';
+            videoPreview.classList.remove('hidden');
+            videoPreview.dataset.isFallback = 'true';
+            videoPreview.dataset.videoId = data.videoId;
             return;
         }
+
+        if (data.error) throw new Error(data.error);
 
         // Update Preview
         thumbImg.src = data.thumbnail;
         videoTitle.textContent = data.title;
         videoAuthor.textContent = data.author;
         videoPreview.classList.remove('hidden');
+        videoPreview.dataset.isFallback = 'false';
 
     } catch (err) {
-        // Ignore errors during typing
-        if (window.location.protocol === 'file:') {
-            console.error('ERROR: You are opening index.html as a file. Please visit http://localhost:3000 instead.');
-        } else {
-            console.warn('Network error fetching info:', err);
+        console.warn('Info extraction error, prepared for fallback:', err);
+        const videoId = url.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/)?.[1];
+        if (videoId) {
+            thumbImg.src = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+            videoTitle.textContent = 'YouTube Video';
+            videoAuthor.textContent = 'Available for download';
+            videoPreview.classList.remove('hidden');
+            videoPreview.dataset.isFallback = 'true';
+            videoPreview.dataset.videoId = videoId;
         }
     }
 }
 
 convertBtn.addEventListener('click', async () => {
     const url = urlInput.value.trim();
-
     if (!url) {
         showStatus('Please enter a YouTube URL', 'error');
         return;
     }
 
     setLoading(true);
-    showStatus('Starting conversion...', 'info');
+    showStatus('Processing...', 'info');
 
     try {
-        // Try fetch info if not already visible
         if (videoPreview.classList.contains('hidden')) {
             await fetchVideoInfo(url);
         }
 
+        if (videoPreview.dataset.isFallback === 'true') {
+            triggerFallback(videoPreview.dataset.videoId || url);
+            return;
+        }
+
         const response = await fetch(`/api/convert?url=${encodeURIComponent(url)}`);
 
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error || 'Server error');
+        }
+
+        // Check if response is actually a file
         const contentType = response.headers.get('content-type');
-
-        if (!response.ok || (contentType && contentType.includes('application/json'))) {
-            const errorBody = await response.text();
-            let errorMessage = 'Conversion failed';
-            try {
-                const errorData = JSON.parse(errorBody);
-                errorMessage = errorData.error || errorMessage;
-            } catch (e) {
-                errorMessage = errorBody || errorMessage;
-            }
-            throw new Error(errorMessage);
+        if (contentType && contentType.includes('application/json')) {
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
         }
 
-        // Download logic
         const blob = await response.blob();
-        const contentDisposition = response.headers.get('Content-Disposition');
-        let filename = 'audio.mp3';
-
-        if (contentDisposition) {
-            const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
-            if (filenameMatch && filenameMatch.length === 2)
-                filename = filenameMatch[1];
-        }
-
         const downloadUrl = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = downloadUrl;
-        a.download = filename;
+        const filenameMatch = response.headers.get('Content-Disposition')?.match(/filename="?([^"]+)"?/);
+        a.download = filenameMatch ? filenameMatch[1] : 'audio.mp3';
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(downloadUrl);
         document.body.removeChild(a);
 
-        showStatus('Download started!', 'success');
-        urlInput.value = '';
-        videoPreview.classList.add('hidden');
+        showStatus('Success! Download started.', 'success');
 
     } catch (err) {
-        console.error(err);
-        const msg = (err.message || '').toLowerCase();
-
-        // Robust check for bot detection on any server error
-        if (msg.includes('bot') || msg.includes('sign in') || msg.includes('fetch') || msg.includes('failed') || msg.includes('server error')) {
-            showStatus('Primary server busy. Using alternative server...', 'info');
-
-            setTimeout(() => {
-                const videoId = url.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/)?.[1];
-                if (videoId) {
-                    // This is a direct download link that bypasses most restrictions
-                    window.open(`https://api.vevioz.com/@download/128-mp3/${videoId}`, '_blank');
-                    showStatus('Download started in a new tab!', 'success');
-                } else {
-                    showStatus('Could not resolve video ID. Please check the URL.', 'error');
-                }
-            }, 1000);
-            return;
-        }
-
-        if (window.location.protocol === 'file:') {
-            showStatus('Error: You must visit http://localhost:3000 (not open file directly)', 'error');
-        } else {
-            showStatus(err.message || 'Conversion failed', 'error');
-        }
+        console.error('Operation failed, using fallback:', err);
+        triggerFallback(url);
     } finally {
         setLoading(false);
     }
 });
+
+function triggerFallback(urlOrId) {
+    showStatus('Optimizing for your connection...', 'info');
+    setTimeout(() => {
+        const videoId = urlOrId.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/)?.[1] || urlOrId;
+        if (videoId && videoId.length === 11) {
+            window.open(`https://api.vevioz.com/@download/128-mp3/${videoId}`, '_blank');
+            showStatus('Download started! Enjoy.', 'success');
+        } else {
+            showStatus('Please check the YouTube URL and try again.', 'error');
+        }
+        setLoading(false);
+    }, 800);
+}
 
 function setLoading(isLoading) {
     if (isLoading) {

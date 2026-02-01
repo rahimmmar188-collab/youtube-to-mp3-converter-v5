@@ -68,11 +68,28 @@ module.exports = async (req, res) => {
         } catch (ytdlErr) {
             console.warn('[INFO] ytdl-core failed, trying Invidious fallback...', ytdlErr.message);
             const videoId = ytdl.getVideoID(videoUrl);
-            const info = await getInfoFromInvidious(videoId);
-            return res.status(200).json(info);
+            try {
+                const info = await getInfoFromInvidious(videoId);
+                return res.status(200).json(info);
+            } catch (invErr) {
+                console.warn('[INFO] All extraction methods failed, returning fallback ID');
+                return res.status(200).json({
+                    title: 'YouTube Video',
+                    thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+                    author: 'Unknown Creator',
+                    lengthSeconds: 0,
+                    videoId: videoId,
+                    isFallback: true
+                });
+            }
         }
     } catch (err) {
-        console.error('[INFO] Error:', err.message);
-        res.status(500).json({ error: 'Extraction Error: ' + err.message });
+        console.error('[INFO] Critical Error:', err.message);
+        const videoId = videoUrl.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/)?.[1] || '';
+        res.status(200).json({
+            title: 'Video',
+            videoId: videoId,
+            isFallback: true
+        });
     }
 };
