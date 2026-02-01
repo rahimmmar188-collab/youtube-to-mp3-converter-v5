@@ -7,9 +7,6 @@ const thumbImg = document.getElementById('thumbImg');
 const videoTitle = document.getElementById('videoTitle');
 const videoAuthor = document.getElementById('videoAuthor');
 const downloadSection = document.getElementById('downloadSection');
-const downloadBtn1 = document.getElementById('downloadBtn1');
-const downloadBtn2 = document.getElementById('downloadBtn2');
-const downloadBtn3 = document.getElementById('downloadBtn3');
 
 let debounceTimer;
 
@@ -80,68 +77,22 @@ convertBtn.addEventListener('click', async () => {
             await fetchVideoInfo(url);
         }
 
-        if (videoPreview.dataset.isFallback === 'true') {
-            triggerFallback(videoPreview.dataset.videoId || url);
-            return;
-        }
+        // We no longer trigger a manual fallback in the frontend.
+        // We call the API, and if the API needs to fallback, it will issue a 302 redirect.
 
-        const response = await fetch(`/api/convert?url=${encodeURIComponent(url)}`);
+        window.location.href = `/api/convert?url=${encodeURIComponent(url)}`;
 
-        if (!response.ok) {
-            const errData = await response.json().catch(() => ({}));
-            throw new Error(errData.error || 'Server error');
-        }
-
-        // Check if response is actually a file
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-            const data = await response.json();
-            if (data.error) throw new Error(data.error);
-        }
-
-        const blob = await response.blob();
-        const downloadUrl = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = downloadUrl;
-        const filenameMatch = response.headers.get('Content-Disposition')?.match(/filename="?([^"]+)"?/);
-        a.download = filenameMatch ? filenameMatch[1] : 'audio.mp3';
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(downloadUrl);
-        document.body.removeChild(a);
-
-        showStatus('Success! Download started.', 'success');
+        showStatus('Download initiated! Testing link quality...', 'success');
 
     } catch (err) {
-        console.error('Operation failed, using fallback:', err);
-        triggerFallback(url);
+        console.error('Operation failed:', err);
+        showStatus('Error: ' + err.message, 'error');
     } finally {
-        setLoading(false);
+        setTimeout(() => setLoading(false), 2000);
     }
 });
 
-function triggerFallback(urlOrId) {
-    const videoId = urlOrId.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/)?.[1] || urlOrId;
-    if (videoId && videoId.length === 11) {
-        // Source 1: download.yt
-        downloadBtn1.href = `https://api.download.yt/@download/128-mp3/${videoId}`;
-        downloadBtn1.textContent = 'Source 1 (Fast)';
-
-        // Source 2: v-mate.top
-        downloadBtn2.href = `https://api.v-mate.top/@download/128-mp3/${videoId}`;
-        downloadBtn2.textContent = 'Source 2 (Stable)';
-
-        // Source 3: mp3.yt-download.org
-        downloadBtn3.href = `https://mp3.yt-download.org/@download/128-mp3/${videoId}`;
-        downloadBtn3.textContent = 'Source 3 (Backup)';
-
-        downloadSection.classList.remove('hidden');
-        showStatus('Primary server is busy. Please use an alternative source below.', 'info');
-    } else {
-        showStatus('Please check the YouTube URL and try again.', 'error');
-    }
-    setLoading(false);
-}
+// Fallback UI helper removed as logic moved to backend 302 redirect
 
 function setLoading(isLoading) {
     if (isLoading) {

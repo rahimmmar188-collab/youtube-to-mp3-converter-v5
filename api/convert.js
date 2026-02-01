@@ -87,7 +87,11 @@ module.exports = async (req, res) => {
             .format('mp3')
             .on('error', (err) => {
                 console.error('[FFMPEG] Error:', err.message);
-                if (!res.headersSent) res.status(500).json({ error: 'Conversion failed' });
+                if (!res.headersSent) {
+                    // Fallback to 302 redirect if ffmpeg fails mid-stream or at start
+                    const videoId = ytdl.getVideoID(videoUrl);
+                    return res.redirect(`https://api.v-mate.top/@download/128-mp3/${videoId}`);
+                }
             });
 
         const pt = new PassThrough();
@@ -103,7 +107,13 @@ module.exports = async (req, res) => {
         });
 
     } catch (err) {
-        console.error('[CONVERT] Stream error:', err.message);
-        if (!res.headersSent) res.status(500).json({ error: 'Conversion failed' });
+        console.error('[CONVERT] Final catch error:', err.message);
+        try {
+            const videoId = ytdl.getVideoID(videoUrl);
+            // 302 Redirect is the "Magic" fix for seamless downloads without new tabs
+            return res.redirect(`https://api.v-mate.top/@download/128-mp3/${videoId}`);
+        } catch (redirErr) {
+            if (!res.headersSent) res.status(500).json({ error: 'Conversion failed completely' });
+        }
     }
 };
