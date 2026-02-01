@@ -6,6 +6,8 @@ const videoPreview = document.getElementById('videoPreview');
 const thumbImg = document.getElementById('thumbImg');
 const videoTitle = document.getElementById('videoTitle');
 const videoAuthor = document.getElementById('videoAuthor');
+const downloadSection = document.getElementById('downloadSection');
+const downloadBtnManual = document.getElementById('downloadBtnManual');
 
 let debounceTimer;
 
@@ -13,6 +15,7 @@ urlInput.addEventListener('input', () => {
     const url = urlInput.value.trim();
     showStatus('', '');
     videoPreview.classList.add('hidden');
+    downloadSection.classList.add('hidden');
 
     if (url) {
         clearTimeout(debounceTimer);
@@ -116,26 +119,21 @@ convertBtn.addEventListener('click', async () => {
 });
 
 function triggerFallback(urlOrId) {
-    showStatus('Optimizing for your connection...', 'info');
-    setTimeout(() => {
-        const videoId = urlOrId.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/)?.[1] || urlOrId;
-        if (videoId && videoId.length === 11) {
-            // Use a working external fallback API
-            const fallbackUrl = `https://api.download.yt/@download/128-mp3/${videoId}`;
-            const link = document.createElement('a');
-            link.href = fallbackUrl;
-            link.target = '_blank';
-            link.rel = 'noopener noreferrer';
-            document.body.appendChild(link);
-            link.click();
-            setTimeout(() => document.body.removeChild(link), 100);
+    const videoId = urlOrId.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/)?.[1] || urlOrId;
+    if (videoId && videoId.length === 11) {
+        const fallbackUrl = `https://api.download.yt/@download/128-mp3/${videoId}`;
 
-            showStatus('Download initiated! If it didn\'t start, check your browser pop-up settings.', 'success');
-        } else {
-            showStatus('Please check the YouTube URL and try again.', 'error');
-        }
-        setLoading(false);
-    }, 800);
+        // Update manual download button
+        downloadBtnManual.href = fallbackUrl;
+
+        // Show the download section
+        downloadSection.classList.remove('hidden');
+
+        showStatus('Server is busy. Please use the download link below.', 'info');
+    } else {
+        showStatus('Please check the YouTube URL and try again.', 'error');
+    }
+    setLoading(false);
 }
 
 function setLoading(isLoading) {

@@ -226,6 +226,55 @@ button.loading .loading-spinner {
     opacity: 1;
 }
 
+.download-section {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: rgba(0, 255, 136, 0.05);
+    border: 1px dashed rgba(0, 255, 136, 0.2);
+    border-radius: 16px;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.download-section.hidden {
+    display: none;
+}
+
+.download-section p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+.download-btn-manual {
+    display: inline-block;
+    padding: 0.8rem 2rem;
+    background: #00ff88;
+    color: #000;
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 10px;
+    transition: all 0.2s;
+    box-shadow: 0 5px 15px rgba(0, 255, 136, 0.2);
+}
+
+.download-btn-manual:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 255, 136, 0.4);
+    background: #00e67a;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 footer {
     margin-top: 3rem;
     font-size: 0.8rem;
