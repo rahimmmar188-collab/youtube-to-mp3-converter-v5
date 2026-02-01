@@ -79,65 +79,79 @@ convertBtn.addEventListener('click', async () => {
 
         showStatus('Connecting to audio server...', 'info');
 
-        const response = await fetch(`/api/convert?url=${encodeURIComponent(url)}`);
+        // Progress status updates for longer waits
+        const statusTimeouts = [
+            setTimeout(() => showStatus('Analyzing audio streams (Primary)...', 'info'), 3000),
+            setTimeout(() => showStatus('Trying alternative backup server...', 'info'), 8000),
+            setTimeout(() => showStatus('Accessing high-speed extraction layer...', 'info'), 15000),
+            setTimeout(() => showStatus('Finalizing high-quality MP3...', 'info'), 25000)
+        ];
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(errorText || 'Server busy, please try again in a moment');
-        }
-
-        showStatus('Found audio! Initializing download...', 'success');
-
-        const reader = response.body.getReader();
-        const chunks = [];
-        let receivedLength = 0;
-
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            chunks.push(value);
-            receivedLength += value.length;
-            // Update status with progress if possible
-            if (receivedLength > 0) {
-                showStatus(`Downloading: ${(receivedLength / 1024 / 1024).toFixed(1)} MB received...`, 'info');
-            }
-        }
-
-        const blob = new Blob(chunks, { type: 'audio/mpeg' });
-        const downloadUrl = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = downloadUrl;
-
-        // Get filename from header or fallback
-        const contentDisp = response.headers.get('Content-Disposition');
-        let filename = 'audio.mp3';
-        if (contentDisp && contentDisp.includes('filename=')) {
-            filename = contentDisp.split('filename=')[1].replace(/["]/g, '');
-        }
-
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-
-        setTimeout(() => {
-            window.URL.revokeObjectURL(downloadUrl);
-            document.body.removeChild(a);
-        }, 100);
-
-        showStatus('Download Complete!', 'success');
-
-    } catch (err) {
-        console.error('Operation failed:', err);
-        let message = err.message;
         try {
-            const parsed = JSON.parse(err.message);
-            if (parsed.error) message = parsed.error;
-        } catch (e) {
-            // Not JSON or doesn't have .error, use err.message as is
+            const response = await fetch(`/api/convert?url=${encodeURIComponent(url)}`);
+
+            // Clear status timeouts once response starts
+            statusTimeouts.forEach(t => clearTimeout(t));
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || 'Server busy, please try again in a moment');
+            }
+
+            showStatus('Found audio! Initializing download...', 'success');
+
+            const reader = response.body.getReader();
+            const chunks = [];
+            let receivedLength = 0;
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                chunks.push(value);
+                receivedLength += value.length;
+                if (receivedLength > 0) {
+                    showStatus(`Downloading: ${(receivedLength / 1024 / 1024).toFixed(1)} MB received...`, 'info');
+                }
+            }
+
+            const blob = new Blob(chunks, { type: 'audio/mpeg' });
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = downloadUrl;
+
+            const contentDisp = response.headers.get('Content-Disposition');
+            let filename = 'audio.mp3';
+            if (contentDisp && contentDisp.includes('filename=')) {
+                filename = decodeURIComponent(contentDisp.split('filename=')[1].replace(/["]/g, ''));
+            }
+
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+
+            setTimeout(() => {
+                window.URL.revokeObjectURL(downloadUrl);
+                document.body.removeChild(a);
+            }, 100);
+
+            showStatus('Download Complete!', 'success');
+
+        } catch (err) {
+            statusTimeouts.forEach(t => clearTimeout(t));
+            console.error('Operation failed:', err);
+            let message = err.message;
+            try {
+                const parsed = JSON.parse(err.message);
+                if (parsed.error) message = parsed.error;
+            } catch (e) { }
+            showStatus('Error: ' + message, 'error');
+        } finally {
+            setLoading(false);
         }
-        showStatus('Error: ' + message, 'error');
-    } finally {
+    } catch (err) {
+        console.error('Outer operation failed:', err);
+        showStatus('Error: ' + err.message, 'error');
         setLoading(false);
     }
 });
