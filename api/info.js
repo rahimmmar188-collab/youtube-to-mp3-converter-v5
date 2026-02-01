@@ -21,17 +21,24 @@ const getYtDlpPath = () => {
     const possiblePaths = [
         path.join(process.cwd(), 'node_modules', 'youtube-dl-exec', 'bin', 'yt-dlp'),
         path.join(__dirname, '..', 'node_modules', 'youtube-dl-exec', 'bin', 'yt-dlp'),
-        '/var/task/node_modules/youtube-dl-exec/bin/yt-dlp'
+        '/var/task/node_modules/youtube-dl-exec/bin/yt-dlp',
+        '/var/task/api/../node_modules/youtube-dl-exec/bin/yt-dlp'
     ];
 
     for (const p of possiblePaths) {
-        if (fs.existsSync(p)) return p;
+        if (fs.existsSync(p)) {
+            try {
+                fs.chmodSync(p, '755');
+            } catch (e) { }
+            return p;
+        }
     }
 
     return 'yt-dlp';
 };
 
 const ytDlpPath = getYtDlpPath();
+console.log('[INFO] Using yt-dlp path:', ytDlpPath);
 
 const getInfo = (url) => {
     return new Promise((resolve, reject) => {
@@ -59,7 +66,9 @@ const getInfo = (url) => {
                     reject(new Error('Failed to parse yt-dlp output'));
                 }
             } else {
-                reject(new Error(`yt-dlp failed with code ${code}: ${stderr}`));
+                const errorMsg = `yt-dlp failed with code ${code}: ${stderr}`;
+                console.error('[INFO]', errorMsg);
+                reject(new Error(errorMsg));
             }
         });
 
