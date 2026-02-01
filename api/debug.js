@@ -17,7 +17,8 @@ module.exports = async (req, res) => {
     const pathsToCheck = [
         path.join(process.cwd(), 'node_modules', 'youtube-dl-exec', 'bin'),
         path.join(__dirname, '..', 'node_modules', 'youtube-dl-exec', 'bin'),
-        '/var/task/node_modules/youtube-dl-exec/bin'
+        '/var/task/node_modules/youtube-dl-exec/bin',
+        '/var/task/api'
     ];
 
     pathsToCheck.forEach(p => {
