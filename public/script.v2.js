@@ -1,3 +1,4 @@
+console.log('YouTube to MP3 v1.0.4 Loaded');
 const convertBtn = document.getElementById('convertBtn');
 const urlInput = document.getElementById('urlInput');
 const statusMessage = document.getElementById('statusMessage');
