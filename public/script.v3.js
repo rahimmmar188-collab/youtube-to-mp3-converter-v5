@@ -120,17 +120,17 @@ function triggerFallback(urlOrId) {
     setTimeout(() => {
         const videoId = urlOrId.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/)?.[1] || urlOrId;
         if (videoId && videoId.length === 11) {
-            // Use a hidden anchor tag to trigger download without being blocked as a popup
-            const fallbackUrl = `https://api.vevioz.com/@download/128-mp3/${videoId}`;
+            // Use a working external fallback API
+            const fallbackUrl = `https://api.download.yt/@download/128-mp3/${videoId}`;
             const link = document.createElement('a');
             link.href = fallbackUrl;
-            link.target = '_blank'; // Browser usually allows _blank if triggered by a user action
+            link.target = '_blank';
             link.rel = 'noopener noreferrer';
             document.body.appendChild(link);
             link.click();
-            document.body.removeChild(link);
+            setTimeout(() => document.body.removeChild(link), 100);
 
-            showStatus('Download initiated! Please check your downloads.', 'success');
+            showStatus('Download initiated! If it didn\'t start, check your browser pop-up settings.', 'success');
         } else {
             showStatus('Please check the YouTube URL and try again.', 'error');
         }

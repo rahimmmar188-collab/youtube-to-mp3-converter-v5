@@ -1,13 +1,17 @@
 const ytdl = require('@distube/ytdl-core');
 
 const INVIDIOUS_INSTANCES = [
-    'https://invidious.flokinet.to',
     'https://inv.riverside.rocks',
     'https://yewtu.be',
+    'https://invidious.flokinet.to',
     'https://invidious.snopyta.org',
     'https://invidious.kavin.rocks',
     'https://inv.nadeko.net',
-    'https://invidious.sethforprivacy.com'
+    'https://invidious.sethforprivacy.com',
+    'https://invidious.lunar.icu',
+    'https://inv.nittka.xyz',
+    'https://iv.melmac.space',
+    'https://invidious.namazso.eu'
 ];
 
 async function getInfoFromInvidious(videoId) {
