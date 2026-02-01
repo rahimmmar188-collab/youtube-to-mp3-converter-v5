@@ -129,7 +129,14 @@ convertBtn.addEventListener('click', async () => {
 
     } catch (err) {
         console.error('Operation failed:', err);
-        showStatus('Error: ' + err.message, 'error');
+        let message = err.message;
+        try {
+            const parsed = JSON.parse(err.message);
+            if (parsed.error) message = parsed.error;
+        } catch (e) {
+            // Not JSON or doesn't have .error, use err.message as is
+        }
+        showStatus('Error: ' + message, 'error');
     } finally {
         setLoading(false);
     }

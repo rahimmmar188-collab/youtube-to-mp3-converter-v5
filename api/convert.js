@@ -44,8 +44,41 @@ module.exports = async (req, res) => {
     const videoUrl = req.query.url;
     if (!videoUrl) return res.status(400).json({ error: 'No URL provided' });
 
-    let stream;
-    let title = 'audio';
+    const { PassThrough } = require('stream');
+    const videoId = ytdl.getVideoID(videoUrl);
+
+    async function tryProxyFallback(vId) {
+        const fallbacks = [
+            `https://api.download.yt/@download/128-mp3/${vId}`,
+            `https://api.v-mate.top/@download/128-mp3/${vId}`,
+            `https://mp3.yt-download.org/@download/128-mp3/${vId}`
+        ];
+
+        for (const url of fallbacks) {
+            try {
+                console.log(`[PROXY] Trying fallback: ${url}`);
+                const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
+                if (response.ok && response.body) {
+                    return response.body;
+                }
+            } catch (e) {
+                console.warn(`[PROXY] Fallback failed: ${url}`, e.message);
+            }
+        }
+        return null;
+    }
+
+    async function streamProxy(fallbackStream, res, filename) {
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}.mp3"`);
+        res.setHeader('Content-Type', 'audio/mpeg');
+        const reader = fallbackStream.getReader();
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            res.write(value);
+        }
+        res.end();
+    }
 
     try {
         console.log('[CONVERT] Trying ytdl-core:', videoUrl);
@@ -69,60 +102,27 @@ module.exports = async (req, res) => {
     } catch (err) {
         console.warn('[CONVERT] ytdl-core failed, trying Invidious fallback...', err.message);
         try {
-            const videoId = ytdl.getVideoID(videoUrl);
             const invidiousData = await getStreamInfoFromInvidious(videoId);
             title = invidiousData.title.replace(/[^\w\s-]/gi, '') || 'audio';
             stream = invidiousData.url;
         } catch (fallbackErr) {
-            console.error('[CONVERT] All extraction methods failed');
-            return res.status(500).json({ error: 'Server Error: ' + fallbackErr.message });
+            console.error('[CONVERT] Invidious fallback failed, proceeding to Proxy Fallback');
+            // Do not return here, let the stream processing catch the undefined 'stream' and try the proxy
         }
-    }
-
-    const { PassThrough } = require('stream');
-
-    async function tryProxyFallback(videoId) {
-        const fallbacks = [
-            `https://api.download.yt/@download/128-mp3/${videoId}`,
-            `https://api.v-mate.top/@download/128-mp3/${videoId}`,
-            `https://mp3.yt-download.org/@download/128-mp3/${videoId}`
-        ];
-
-        for (const url of fallbacks) {
-            try {
-                console.log(`[PROXY] Trying fallback: ${url}`);
-                const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
-                if (response.ok && response.body) {
-                    return response.body;
-                }
-            } catch (e) {
-                console.warn(`[PROXY] Fallback failed: ${url}`, e.message);
-            }
-        }
-        return null;
     }
 
     try {
+        if (!stream) throw new Error('No stream source');
+
         const ffStream = ffmpeg(stream)
             .audioBitrate(128)
             .format('mp3')
             .on('error', async (err) => {
                 console.error('[FFMPEG] Error:', err.message);
                 if (!res.headersSent) {
-                    const videoId = ytdl.getVideoID(videoUrl);
                     const fallbackStream = await tryProxyFallback(videoId);
-                    if (fallbackStream) {
-                        res.setHeader('Content-Disposition', `attachment; filename="${title}.mp3"`);
-                        res.setHeader('Content-Type', 'audio/mpeg');
-                        const reader = fallbackStream.getReader();
-                        while (true) {
-                            const { done, value } = await reader.read();
-                            if (done) break;
-                            res.write(value);
-                        }
-                        return res.end();
-                    }
-                    res.status(500).json({ error: 'Conversion failed completely' });
+                    if (fallbackStream) return streamProxy(fallbackStream, res, title);
+                    res.status(500).json({ error: 'All extraction methods failed' });
                 }
             });
 
@@ -139,22 +139,11 @@ module.exports = async (req, res) => {
         });
 
     } catch (err) {
-        console.error('[CONVERT] Main catch error:', err.message);
+        console.error('[CONVERT] Extraction failed, trying final proxy...', err.message);
         if (!res.headersSent) {
-            const videoId = ytdl.getVideoID(videoUrl);
             const fallbackStream = await tryProxyFallback(videoId);
-            if (fallbackStream) {
-                res.setHeader('Content-Disposition', `attachment; filename="${title}.mp3"`);
-                res.setHeader('Content-Type', 'audio/mpeg');
-                const reader = fallbackStream.getReader();
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    res.write(value);
-                }
-                return res.end();
-            }
-            res.status(500).json({ error: 'Critical failure' });
+            if (fallbackStream) return streamProxy(fallbackStream, res, title);
+            res.status(500).json({ error: 'Server could not process this video. Please try another.' });
         }
     }
 };
