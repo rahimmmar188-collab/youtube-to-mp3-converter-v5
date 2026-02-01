@@ -95,6 +95,6 @@ module.exports = async (req, res) => {
         });
     } catch (err) {
         console.error('[INFO] Error:', err.message);
-        res.status(500).json({ error: 'Failed to fetch video info. Please try again.' });
+        res.status(500).json({ error: 'Failed to fetch video info: ' + err.message });
     }
 };
