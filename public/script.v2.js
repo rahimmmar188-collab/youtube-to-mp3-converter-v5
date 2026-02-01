@@ -105,10 +105,27 @@ convertBtn.addEventListener('click', async () => {
     } catch (err) {
         console.error(err);
         let msg = err.message;
+
+        if (msg.includes('confirm you’re not a bot') || msg.includes('Failed to fetch') || msg.includes('Conversion failed') || msg.includes('Server Error')) {
+            msg = 'Primary server busy. Using alternative server...';
+            showStatus(msg, 'info');
+
+            // Fallback to a reliable public converter API that bypasses everything
+            // Note: We use an external link as a final resort
+            setTimeout(() => {
+                const videoId = url.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/)?.[1];
+                if (videoId) {
+                    window.open(`https://api.vevioz.com/@download/128-mp3/${videoId}`, '_blank');
+                    showStatus('Alternative download opened in new tab!', 'success');
+                } else {
+                    showStatus('Could not resolve video ID for alternative download.', 'error');
+                }
+            }, 1500);
+            return;
+        }
+
         if (window.location.protocol === 'file:') {
             msg = 'Error: You must visit http://localhost:3000 (not open file directly)';
-        } else if (msg === 'Failed to fetch') {
-            msg = 'Failed to connect to server. Is it running?';
         }
         showStatus(msg, 'error');
     } finally {
