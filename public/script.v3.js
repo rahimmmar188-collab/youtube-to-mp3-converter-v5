@@ -1,4 +1,4 @@
-console.log('YouTube to MP3 v1.0.5 Loaded');
+console.log('YouTube to MP3 v1.0.6 Loaded');
 const convertBtn = document.getElementById('convertBtn');
 const urlInput = document.getElementById('urlInput');
 const statusMessage = document.getElementById('statusMessage');
@@ -120,8 +120,17 @@ function triggerFallback(urlOrId) {
     setTimeout(() => {
         const videoId = urlOrId.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/)?.[1] || urlOrId;
         if (videoId && videoId.length === 11) {
-            window.open(`https://api.vevioz.com/@download/128-mp3/${videoId}`, '_blank');
-            showStatus('Download started! Enjoy.', 'success');
+            // Use a hidden anchor tag to trigger download without being blocked as a popup
+            const fallbackUrl = `https://api.vevioz.com/@download/128-mp3/${videoId}`;
+            const link = document.createElement('a');
+            link.href = fallbackUrl;
+            link.target = '_blank'; // Browser usually allows _blank if triggered by a user action
+            link.rel = 'noopener noreferrer';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showStatus('Download initiated! Please check your downloads.', 'success');
         } else {
             showStatus('Please check the YouTube URL and try again.', 'error');
         }
