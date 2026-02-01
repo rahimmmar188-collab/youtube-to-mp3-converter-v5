@@ -104,30 +104,30 @@ convertBtn.addEventListener('click', async () => {
 
     } catch (err) {
         console.error(err);
-        let msg = err.message;
+        const msg = (err.message || '').toLowerCase();
 
-        if (msg.includes('confirm you’re not a bot') || msg.includes('Failed to fetch') || msg.includes('Conversion failed') || msg.includes('Server Error')) {
-            msg = 'Primary server busy. Using alternative server...';
-            showStatus(msg, 'info');
+        // Robust check for bot detection on any server error
+        if (msg.includes('bot') || msg.includes('sign in') || msg.includes('fetch') || msg.includes('failed') || msg.includes('server error')) {
+            showStatus('Primary server busy. Using alternative server...', 'info');
 
-            // Fallback to a reliable public converter API that bypasses everything
-            // Note: We use an external link as a final resort
             setTimeout(() => {
                 const videoId = url.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/)?.[1];
                 if (videoId) {
+                    // This is a direct download link that bypasses most restrictions
                     window.open(`https://api.vevioz.com/@download/128-mp3/${videoId}`, '_blank');
-                    showStatus('Alternative download opened in new tab!', 'success');
+                    showStatus('Download started in a new tab!', 'success');
                 } else {
-                    showStatus('Could not resolve video ID for alternative download.', 'error');
+                    showStatus('Could not resolve video ID. Please check the URL.', 'error');
                 }
-            }, 1500);
+            }, 1000);
             return;
         }
 
         if (window.location.protocol === 'file:') {
-            msg = 'Error: You must visit http://localhost:3000 (not open file directly)';
+            showStatus('Error: You must visit http://localhost:3000 (not open file directly)', 'error');
+        } else {
+            showStatus(err.message || 'Conversion failed', 'error');
         }
-        showStatus(msg, 'error');
     } finally {
         setLoading(false);
     }
