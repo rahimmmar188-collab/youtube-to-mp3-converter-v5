@@ -5,7 +5,8 @@
   "main": "api/index.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "postinstall": "node -e \"try { require('youtube-dl-exec/package.json'); require('youtube-dl-exec').download().catch(e => console.log('Download failed:', e.message)); } catch (e) { console.log('Package not found'); }\""
   },
   "keywords": [
     "youtube",
