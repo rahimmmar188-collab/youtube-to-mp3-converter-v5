@@ -6,17 +6,24 @@ const ytdl = require('@distube/ytdl-core');
 ffmpeg.setFfmpegPath(ffmpegPath);
 
 const INVIDIOUS_INSTANCES = [
-    'https://inv.riverside.rocks',
     'https://yewtu.be',
-    'https://invidious.snopyta.org',
+    'https://yt.artemislena.eu',
     'https://invidious.flokinet.to',
-    'https://invidious.kavin.rocks',
-    'https://inv.nadeko.net',
-    'https://invidious.sethforprivacy.com',
-    'https://invidious.lunar.icu',
-    'https://inv.nittka.xyz',
+    'https://invidious.privacydev.net',
     'https://iv.melmac.space',
-    'https://invidious.namazso.eu'
+    'https://inv.nadeko.net',
+    'https://inv.tux.pizza',
+    'https://invidious.protokolla.fi',
+    'https://invidious.private.coffee',
+    'https://yt.drgnz.club',
+    'https://iv.datura.network',
+    'https://invidious.fdn.fr',
+    'https://invidious.drgns.space',
+    'https://inv.us.projectsegfau.lt',
+    'https://invidious.jing.rocks',
+    'https://invidious.privacyredirect.com',
+    'https://invidious.reallyaweso.me',
+    'https://invidious.materialio.us'
 ];
 
 async function getStreamInfoFromInvidious(videoId) {
@@ -72,18 +79,29 @@ module.exports = async (req, res) => {
         }
     }
 
-    res.setHeader('Content-Disposition', `attachment; filename="${title}.mp3"`);
-    res.setHeader('Content-Type', 'audio/mpeg');
+    const { PassThrough } = require('stream');
 
     try {
-        ffmpeg(stream)
+        const ffStream = ffmpeg(stream)
             .audioBitrate(128)
             .format('mp3')
             .on('error', (err) => {
                 console.error('[FFMPEG] Error:', err.message);
                 if (!res.headersSent) res.status(500).json({ error: 'Conversion failed' });
-            })
-            .pipe(res, { end: true });
+            });
+
+        const pt = new PassThrough();
+        ffStream.pipe(pt);
+
+        pt.once('data', (chunk) => {
+            if (!res.headersSent) {
+                res.setHeader('Content-Disposition', `attachment; filename="${title}.mp3"`);
+                res.setHeader('Content-Type', 'audio/mpeg');
+                res.write(chunk);
+                pt.pipe(res);
+            }
+        });
+
     } catch (err) {
         console.error('[CONVERT] Stream error:', err.message);
         if (!res.headersSent) res.status(500).json({ error: 'Conversion failed' });

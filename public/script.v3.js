@@ -7,7 +7,9 @@ const thumbImg = document.getElementById('thumbImg');
 const videoTitle = document.getElementById('videoTitle');
 const videoAuthor = document.getElementById('videoAuthor');
 const downloadSection = document.getElementById('downloadSection');
-const downloadBtnManual = document.getElementById('downloadBtnManual');
+const downloadBtn1 = document.getElementById('downloadBtn1');
+const downloadBtn2 = document.getElementById('downloadBtn2');
+const downloadBtn3 = document.getElementById('downloadBtn3');
 
 let debounceTimer;
 
@@ -121,15 +123,20 @@ convertBtn.addEventListener('click', async () => {
 function triggerFallback(urlOrId) {
     const videoId = urlOrId.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/)?.[1] || urlOrId;
     if (videoId && videoId.length === 11) {
-        const fallbackUrl = `https://api.download.yt/@download/128-mp3/${videoId}`;
+        // Source 1: download.yt
+        downloadBtn1.href = `https://api.download.yt/@download/128-mp3/${videoId}`;
+        downloadBtn1.textContent = 'Source 1 (Fast)';
 
-        // Update manual download button
-        downloadBtnManual.href = fallbackUrl;
+        // Source 2: v-mate.top
+        downloadBtn2.href = `https://api.v-mate.top/@download/128-mp3/${videoId}`;
+        downloadBtn2.textContent = 'Source 2 (Stable)';
 
-        // Show the download section
+        // Source 3: mp3.yt-download.org
+        downloadBtn3.href = `https://mp3.yt-download.org/@download/128-mp3/${videoId}`;
+        downloadBtn3.textContent = 'Source 3 (Backup)';
+
         downloadSection.classList.remove('hidden');
-
-        showStatus('Server is busy. Please use the download link below.', 'info');
+        showStatus('Primary server is busy. Please use an alternative source below.', 'info');
     } else {
         showStatus('Please check the YouTube URL and try again.', 'error');
     }

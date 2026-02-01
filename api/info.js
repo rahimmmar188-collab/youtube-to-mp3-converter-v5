@@ -1,17 +1,24 @@
 const ytdl = require('@distube/ytdl-core');
 
 const INVIDIOUS_INSTANCES = [
-    'https://inv.riverside.rocks',
     'https://yewtu.be',
+    'https://yt.artemislena.eu',
     'https://invidious.flokinet.to',
-    'https://invidious.snopyta.org',
-    'https://invidious.kavin.rocks',
-    'https://inv.nadeko.net',
-    'https://invidious.sethforprivacy.com',
-    'https://invidious.lunar.icu',
-    'https://inv.nittka.xyz',
+    'https://invidious.privacydev.net',
     'https://iv.melmac.space',
-    'https://invidious.namazso.eu'
+    'https://inv.nadeko.net',
+    'https://inv.tux.pizza',
+    'https://invidious.protokolla.fi',
+    'https://invidious.private.coffee',
+    'https://yt.drgnz.club',
+    'https://iv.datura.network',
+    'https://invidious.fdn.fr',
+    'https://invidious.drgns.space',
+    'https://inv.us.projectsegfau.lt',
+    'https://invidious.jing.rocks',
+    'https://invidious.privacyredirect.com',
+    'https://invidious.reallyaweso.me',
+    'https://invidious.materialio.us'
 ];
 
 async function getInfoFromInvidious(videoId) {
